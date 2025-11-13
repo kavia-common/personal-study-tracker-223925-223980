@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import Study from "./pages/Study";
 import Sessions from "./pages/Sessions";
 import Leaderboard from "./pages/Leaderboard";
+import Scores from "./pages/Scores";
 
 // PUBLIC_INTERFACE
 function App() {
@@ -55,6 +56,7 @@ function App() {
               }
             />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/scores" element={<Scores />} />
             <Route path="*" element={<div>Not Found</div>} />
           </Routes>
         </Layout>

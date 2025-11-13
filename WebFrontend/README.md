@@ -13,13 +13,32 @@ React SPA that connects to the Backend API to support:
 - /leaderboard
 
 ## Environment
-Create a `.env` file from `.env.example` and set:
+Create a `.env` file from `.env.example` and set at minimum:
 
 ```
 REACT_APP_API_BASE=http://localhost:3001
+REACT_APP_SUPABASE_URL=your-supabase-url
+REACT_APP_SUPABASE_KEY=your-supabase-anon-key
 ```
 
-Do not hardcode configuration in code. This value is read at runtime via `process.env.REACT_APP_API_BASE`.
+Do not hardcode configuration in code. These values are read at runtime via `process.env.REACT_APP_*`.
+
+### Supabase Setup (for Scores page)
+- Create a Supabase project at supabase.com and obtain:
+  - Project URL and anon public key (use anon key only on the frontend).
+- Create a table named `scores` with columns:
+  - id: bigint (PK) or uuid (default), primary key
+  - username: text
+  - score: integer
+  - level: text
+  - created_at: timestamp with timezone (default now())
+- Row Level Security (RLS) policies for testing:
+  - Enable RLS on `scores`.
+  - Add permissive policies allowing:
+    - select: true (or for anon role) to read latest scores
+    - insert: true (or for anon role) to submit scores
+  Note: For production, restrict policies appropriately to your needs.
+- This page uses optional anonymous sign-in via supabase-js; ensure policies support your chosen approach.
 
 ## API Client and Auth
 - `src/api/client.js` provides a small wrapper for calling the backend.

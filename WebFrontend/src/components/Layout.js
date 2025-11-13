@@ -23,6 +23,7 @@ export default function Layout({ children }) {
           <NavLink to="/study" style={styles.link}>Study</NavLink>
           <NavLink to="/sessions" style={styles.link}>My Sessions</NavLink>
           <NavLink to="/leaderboard" style={styles.link}>Leaderboard</NavLink>
+          <NavLink to="/scores" style={styles.link}>Scores</NavLink>
         </div>
         <div>
           {authed ? (
