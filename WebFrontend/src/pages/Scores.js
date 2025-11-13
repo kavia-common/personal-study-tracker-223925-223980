@@ -18,11 +18,30 @@ export default function Scores() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
+
+  // Env present check for user-facing banner
+  const envMissing =
+    !process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_KEY;
 
   // Form fields
   const [username, setUsername] = useState("");
   const [score, setScore] = useState("");
   const [level, setLevel] = useState("");
+
+  function normalizeSupabaseError(ex) {
+    const msg = ex?.message || String(ex || "");
+    if (/Failed to fetch|NetworkError|TypeError: Failed to fetch/i.test(msg)) {
+      return "Network error contacting Supabase (check URL/CORS). See console for details.";
+    }
+    if (/401|403|permission|rls/i.test(msg)) {
+      return "Access denied by Supabase RLS policies (401/403). Allow select/insert for anon in test or sign-in policies.";
+    }
+    if (/not configured/i.test(msg)) {
+      return "Supabase is not configured (missing env). Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY.";
+    }
+    return msg || "Unexpected Supabase error";
+  }
 
   async function ensureAnonymousSession() {
     // For permissive RLS scenarios, we can sign in anonymously if policies expect an auth context.
@@ -33,14 +52,17 @@ export default function Scores() {
           // Non-fatal if policies allow anon without auth; just warn.
           // eslint-disable-next-line no-console
           console.warn("[Supabase] Anonymous sign-in failed:", error.message);
+          setStatus("Anonymous session not established (policies may still allow anon)");
         } else if (data?.user) {
           // eslint-disable-next-line no-console
           console.log("[Supabase] Anonymous session established");
+          setStatus("Anonymous session active");
         }
       }
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn("[Supabase] Anonymous sign-in exception:", e?.message || e);
+      setStatus("Anonymous session attempt failed");
     }
   }
 
@@ -48,7 +70,6 @@ export default function Scores() {
     setLoading(true);
     setErr("");
     try {
-      // Query latest 20 scores by created_at desc
       const { data, error } = await supabase
         .from("scores")
         .select("*")
@@ -58,7 +79,7 @@ export default function Scores() {
       if (error) throw error;
       setItems(data || []);
     } catch (ex) {
-      setErr(ex?.message || "Failed to load scores");
+      setErr(normalizeSupabaseError(ex));
     } finally {
       setLoading(false);
     }
@@ -103,7 +124,7 @@ export default function Scores() {
       setLevel("");
       await fetchScores();
     } catch (ex) {
-      setErr(ex?.message || "Failed to add score");
+      setErr(normalizeSupabaseError(ex));
     } finally {
       setBusy(false);
     }
@@ -112,6 +133,16 @@ export default function Scores() {
   return (
     <div>
       <h1>Scores</h1>
+
+      {envMissing && (
+        <div role="note" style={styles.banner}>
+          Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY in WebFrontend/.env,
+          then restart the dev server. The Scores page requires a Supabase project with a "scores" table and permissive
+          test RLS (select/insert for anon or via anonymous sign-in).
+        </div>
+      )}
+
+      {status && <p style={{ fontSize: 12, opacity: 0.8 }}>Connection status: {status}</p>}
 
       <section style={{ marginBottom: 16 }}>
         <h2>Add a Score</h2>
@@ -149,6 +180,10 @@ export default function Scores() {
             {busy ? "Saving..." : "Add Score"}
           </button>
         </form>
+        <p style={styles.help}>
+          Note: If insert fails with 401/403, update your Supabase RLS policies to allow insert for anon in testing, or
+          implement auth-based policies. See README "Supabase Setup" section.
+        </p>
       </section>
 
       <section>
@@ -193,6 +228,15 @@ export default function Scores() {
 }
 
 const styles = {
+  banner: {
+    background: "#fff3cd",
+    color: "#664d03",
+    border: "1px solid #ffecb5",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 12,
+    fontSize: 14,
+  },
   form: { display: "grid", gap: 10, maxWidth: 420 },
   label: { display: "grid", gap: 6, textAlign: "left" },
   input: { padding: 10, fontSize: 16 },
@@ -206,4 +250,5 @@ const styles = {
     padding: 10,
     borderRadius: 6,
   },
+  help: { fontSize: 12, opacity: 0.8, marginTop: 8 },
 };

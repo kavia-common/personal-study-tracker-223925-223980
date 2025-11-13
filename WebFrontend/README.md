@@ -4,6 +4,7 @@ React SPA that connects to the Backend API to support:
 - Register and Login (JWT-based)
 - Create and manage study sessions
 - View leaderboard (all-time and last 30 days)
+- Scores page backed by Supabase (optional)
 
 ## Routes
 - /login
@@ -11,17 +12,22 @@ React SPA that connects to the Backend API to support:
 - /study (protected)
 - /sessions (protected)
 - /leaderboard
+- /scores (optional, requires Supabase env vars)
 
 ## Environment
 Create a `.env` file from `.env.example` and set at minimum:
 
 ```
 REACT_APP_API_BASE=http://localhost:3001
+# Scores page (Supabase)
 REACT_APP_SUPABASE_URL=your-supabase-url
 REACT_APP_SUPABASE_KEY=your-supabase-anon-key
 ```
 
-Do not hardcode configuration in code. These values are read at runtime via `process.env.REACT_APP_*`.
+Notes:
+- For Create React App (react-scripts), only variables prefixed with `REACT_APP_` are exposed to the browser build.
+- After changing `.env`, you must restart `npm start` to propagate changes.
+- Do not hardcode configuration in code. Values are read at runtime via `process.env.REACT_APP_*`.
 
 ### Supabase Setup (for Scores page)
 - Create a Supabase project at supabase.com and obtain:
@@ -37,8 +43,15 @@ Do not hardcode configuration in code. These values are read at runtime via `pro
   - Add permissive policies allowing:
     - select: true (or for anon role) to read latest scores
     - insert: true (or for anon role) to submit scores
+  - Optionally allow anonymous sign-in (the page attempts `auth.signInAnonymously()`); otherwise, allow anon without auth.
   Note: For production, restrict policies appropriately to your needs.
-- This page uses optional anonymous sign-in via supabase-js; ensure policies support your chosen approach.
+
+### Troubleshooting the Scores page
+- Missing env: A yellow banner appears if `REACT_APP_SUPABASE_URL` or `REACT_APP_SUPABASE_KEY` are not set. Create `WebFrontend/.env`, set both vars, and restart the dev server.
+- 401/403 errors or “permission denied”: RLS likely blocks access. Add permissive `select`/`insert` policies for the `anon` role for testing, or implement authenticated policies.
+- Network/CORS errors: Verify your Supabase Project URL is correct and accessible from the browser. Open the browser devtools Network tab to inspect failed requests.
+- Insert fails but read works: Check that `insert` RLS policy exists for the `scores` table for `anon` or configured auth role.
+- Still not working? Check console logs for the [Supabase] messages emitted by the app for hints.
 
 ## API Client and Auth
 - `src/api/client.js` provides a small wrapper for calling the backend.
@@ -65,8 +78,9 @@ npm test
 
 ## Accessibility & Validation
 - Basic client-side validation is implemented on forms.
-- Errors from backend are surfaced as user-friendly messages.
+- Errors from backend and Supabase are surfaced as user-friendly messages on the pages.
 
 ## Security Notes
 - No secrets are hardcoded.
 - Only JWT is stored (localStorage fallback). Consider rotating/short-lived tokens and refresh tokens in production environments.
+- Only the Supabase anon public key is used on the frontend.
