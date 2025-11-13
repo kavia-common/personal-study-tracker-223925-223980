@@ -29,6 +29,14 @@ Notes:
 - After changing `.env`, you must restart `npm start` to propagate changes.
 - Do not hardcode configuration in code. Values are read at runtime via `process.env.REACT_APP_*`.
 
+### Troubleshooting the Leaderboard page
+- Verify Backend API is running and accessible at `REACT_APP_API_BASE` (default: http://localhost:3001). The frontend calls `GET /leaderboard?top=N`.
+- If you see “Failed to load leaderboard (network/CORS)”, ensure:
+  - The API base URL is correct in `WebFrontend/.env`.
+  - The Backend API allows requests from the frontend origin (CORS configuration should allow http://localhost:3000 during development).
+  - The Backend API endpoint `/leaderboard` is reachable and documented in its `/docs` (OpenAPI).
+- The frontend defensively handles empty/malformed responses and will render “No data.” instead of breaking.
+
 ### Supabase Setup (for Scores page)
 - Create a Supabase project at supabase.com and obtain:
   - Project URL and anon public key (use anon key only on the frontend).
