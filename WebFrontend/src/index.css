@@ -11,3 +11,22 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Utility basic styles for buttons and nav used in this app */
+.btn {
+  background: var(--button-bg, #007bff);
+  color: var(--button-text, #fff);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.navbar a.active {
+  text-decoration: underline;
+}
